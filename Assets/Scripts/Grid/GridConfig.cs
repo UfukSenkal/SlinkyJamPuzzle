@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using HybridPuzzle.SlinkyJam.Slinky;
+using HybridPuzzle.SlinkyJam.Helper;
+using Unity.VisualScripting.Antlr3.Runtime.Misc;
 
 namespace HybridPuzzle.SlinkyJam.Grid
 {
@@ -63,6 +65,14 @@ namespace HybridPuzzle.SlinkyJam.Grid
         public bool IsSlotEmpty(int slotIndex)
         {
             return _slots.ContainsKey(slotIndex) && _slots[slotIndex].IsEmpty;
+        }
+        public bool IsGridFull()
+        {
+            foreach (var slot in _slots)
+            {
+                if (slot.Value.IsEmpty) return false;
+            }
+            return true;
         }
 
         public Vector3 GetWorldPosition(int slotIndex)

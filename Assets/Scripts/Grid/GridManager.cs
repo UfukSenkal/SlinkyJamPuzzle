@@ -4,36 +4,37 @@ using System.Collections.Generic;
 using HybridPuzzle.SlinkyJam.Level;
 using HybridPuzzle.SlinkyJam.Matching;
 using HybridPuzzle.SlinkyJam.Slinky;
+using HybridPuzzle.SlinkyJam.Helper;
 
 namespace HybridPuzzle.SlinkyJam.Grid
 {
-    public class GridManager : MonoBehaviour
+    public class GridManager : MonoBehaviour, ILevelInitializer
     {
-        [SerializeField] private LevelData levelData;
         [SerializeField] private GridConfig upperGridConfig;
         [SerializeField] private GridConfig lowerGridConfig;
         [SerializeField] private SlinkyBehaviour slinkyPrefab;
 
         private MatchManager _matchManager;
+        private LevelData_SO _levelData;
 
         public GridConfig LowerGridConfig => lowerGridConfig;
 
-        private void Start()
+        public void InitiliazeWithLevel(LevelData_SO currentLevel)
         {
+            _levelData = currentLevel;
             InitializeGrids();
             SpawnSlinkies();
             _matchManager = new MatchManager(this);
         }
-
         private void InitializeGrids()
         {
-            upperGridConfig.InitializeGrid(levelData.upperGridSize, transform);
-            lowerGridConfig.InitializeGrid(levelData.lowerGridSize, transform);
+            upperGridConfig.InitializeGrid(_levelData.upperGridSize, transform);
+            lowerGridConfig.InitializeGrid(_levelData.lowerGridSize, transform);
         }
 
         private void SpawnSlinkies()
         {
-            foreach (var slinkyData in levelData.slinkies)
+            foreach (var slinkyData in _levelData.slinkies)
             {
                 if (!upperGridConfig.ContainsSlotIndex(slinkyData.startSlot) || !upperGridConfig.ContainsSlotIndex(slinkyData.endSlot))
                 {
@@ -66,6 +67,8 @@ namespace HybridPuzzle.SlinkyJam.Grid
             {
                 _matchManager.CheckMatch();
                 slinky.onMovementComplete = null;
+                if (lowerGridConfig.IsGridFull())
+                    Core.GameManager.Instance.Fail();
             };
 
         }
@@ -127,22 +130,8 @@ namespace HybridPuzzle.SlinkyJam.Grid
                 }
             }
         }
-    }
-    public class GridData
-    {
-        public SlinkyBehaviour slinky;
-        public Vector3 pos;
 
-        public bool IsEmpty => slinky == null;
-        public GridData()
-        {
-            slinky = null;
-            pos = Vector3.zero;
-        }
-        public GridData(SlinkyBehaviour slinky, Vector3 pos)
-        {
-            this.slinky = slinky;
-            this.pos = pos;
-        }
+
     }
+    
 }

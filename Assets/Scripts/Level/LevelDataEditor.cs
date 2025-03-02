@@ -1,19 +1,20 @@
 #if UNITY_EDITOR
+using HybridPuzzle.SlinkyJam.Helper;
 using UnityEditor;
 using UnityEngine;
 namespace HybridPuzzle.SlinkyJam.Level
 {
 
-    [CustomEditor(typeof(LevelData))]
+    [CustomEditor(typeof(LevelData_SO))]
     public class LevelDataEditor : Editor
     {
-        private LevelData _levelData;
+        private LevelData_SO _levelData;
         private const float CellSize = 20f; 
         private const float Padding = 5f; 
 
         private void OnEnable()
         {
-            _levelData = (LevelData)target;
+            _levelData = (LevelData_SO)target;
         }
 
         public override void OnInspectorGUI()

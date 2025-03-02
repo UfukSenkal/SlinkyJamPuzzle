@@ -26,4 +26,10 @@ MonoBehaviour:
     color: {r: 1, g: 0, b: 0, a: 1}
   - startSlot: 4
     endSlot: 19
-    color: {r: 1, g: 0.9864793, b: 0, a: 1}
+    color: {r: 1, g: 1, b: 0, a: 1}
+  - startSlot: 5
+    endSlot: 8
+    color: {r: 1, g: 1, b: 0, a: 1}
+  - startSlot: 10
+    endSlot: 14
+    color: {r: 1, g: 1, b: 0, a: 1}

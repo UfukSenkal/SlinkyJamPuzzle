@@ -4,6 +4,7 @@ using UnityEngine;
 using DG.Tweening;
 using HybridPuzzle.SlinkyJam.Grid;
 using HybridPuzzle.SlinkyJam.Slinky;
+using HybridPuzzle.SlinkyJam.Core;
 
 namespace HybridPuzzle.SlinkyJam.Matching
 {
@@ -71,8 +72,8 @@ namespace HybridPuzzle.SlinkyJam.Matching
                 _gridManager.LowerGridConfig.RemoveSlinky(_targetSlinky.SlotIndex);
 
                 ShiftSlinkiesAfterMatch();
-
                 _isMatching = false;
+                GameManager.Instance.OnMatchCompleted();
                 return;
             }
 
