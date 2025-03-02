@@ -1,20 +1,22 @@
 using UnityEngine;
+using DG.Tweening;
 using System.Collections.Generic;
-using System.Collections;
-using System.Drawing;
-using HybridPuzzle.SlinkyJam.Slinky;
 using HybridPuzzle.SlinkyJam.Level;
+using HybridPuzzle.SlinkyJam.Matching;
+using HybridPuzzle.SlinkyJam.Slinky;
 
 namespace HybridPuzzle.SlinkyJam.Grid
 {
     public class GridManager : MonoBehaviour
     {
         [SerializeField] private LevelData levelData;
-        [SerializeField] private GridConfig upperGridConfig; // Üstteki grid
-        [SerializeField] private GridConfig lowerGridConfig; // Alttaki grid
+        [SerializeField] private GridConfig upperGridConfig;
+        [SerializeField] private GridConfig lowerGridConfig;
         [SerializeField] private SlinkyBehaviour slinkyPrefab;
 
         private MatchManager _matchManager;
+
+        public GridConfig LowerGridConfig => lowerGridConfig;
 
         private void Start()
         {
@@ -25,7 +27,6 @@ namespace HybridPuzzle.SlinkyJam.Grid
 
         private void InitializeGrids()
         {
-            // Üstteki ve alttaki grid'leri initialize et
             upperGridConfig.InitializeGrid(levelData.upperGridSize, transform);
             lowerGridConfig.InitializeGrid(levelData.lowerGridSize, transform);
         }
@@ -34,7 +35,6 @@ namespace HybridPuzzle.SlinkyJam.Grid
         {
             foreach (var slinkyData in levelData.slinkies)
             {
-                // Slot index'lerinin geçerli olup olmadýðýný kontrol et
                 if (!upperGridConfig.ContainsSlotIndex(slinkyData.startSlot) || !upperGridConfig.ContainsSlotIndex(slinkyData.endSlot))
                 {
                     Debug.LogError($"Invalid slot positions for slinky: {slinkyData.startSlot}, {slinkyData.endSlot}");
@@ -51,69 +51,83 @@ namespace HybridPuzzle.SlinkyJam.Grid
                 slinky.SlotIndex = slinkyData.startSlot;
             }
         }
-        public int FindEmptySlotInLowerGrid()
-        {
-            for (int i = 0; i < lowerGridConfig.SlotCount; i++)
-            {
-                if (IsSlotOccupied(lowerGridConfig, i))
-                {
-                    return i;
-                }
-            }
-            return -1; // Boþ slot bulunamadý
-        }
-
-        public bool IsSlotOccupied(GridConfig grid, int slotIndex)
-        {
-            return grid.ContainsSlotIndex(slotIndex) && grid.IsSlotEmpty(slotIndex);
-        }
 
         public void PlaceSlinkyInLowerGrid(SlinkyBehaviour slinky)
         {
-            lowerGridConfig.PlaceSlinky(slinky, slinky.SlotIndex);
-            slinky.onMovementComplete -= OnSlinkyPlacedLowerGrid;
-            slinky.onMovementComplete += OnSlinkyPlacedLowerGrid;
-        }
-        private void OnSlinkyPlacedLowerGrid()
-        {
-            _matchManager.CheckMatch();
-        }
-        public List<SlinkyBehaviour> GetLowerGridSlinkies()
-        {
-            List<SlinkyBehaviour> slinkyList = new List<SlinkyBehaviour>();
-            var en = lowerGridConfig.GetSlinkyEnumerator();
-            while (en.MoveNext())
+            int slotIndex = FindBestSlot(slinky);
+            if (slotIndex == -1) return;
+
+            ShiftSlinkiesRight(slotIndex);
+
+            lowerGridConfig.PlaceSlinky(slinky, slotIndex);
+            slinky.SlotIndex = slotIndex;
+            slinky.MoveToTarget(lowerGridConfig.GetWorldPosition(slotIndex));
+            slinky.onMovementComplete += () =>
             {
-                slinkyList.Add(en.Current);
+                _matchManager.CheckMatch();
+                slinky.onMovementComplete = null;
+            };
+
+        }
+
+        private int FindBestSlot(SlinkyBehaviour slinky)
+        {
+            int bestSlot = -1;
+            for (int i = 0; i < lowerGridConfig.SlotCount; i++)
+            {
+                if (lowerGridConfig.IsSlotEmpty(i))
+                {
+                    if (bestSlot == -1) bestSlot = i;
+                }
+                else if (lowerGridConfig.GetSlinkyAt(i).Color == slinky.Color)
+                {
+                    bestSlot = i + 1;
+                }
             }
-            en.Dispose();
-
-            return slinkyList;
-        }
-        public void RemoveSlinkyFromGrid(SlinkyBehaviour slinky, bool isLower = true, int slotIndex = 0)
-        {
-            if (isLower)
-                lowerGridConfig.RemoveSlinky(slinky.SlotIndex);
-            else
-                upperGridConfig.RemoveSlinky(slotIndex);
+            return bestSlot < lowerGridConfig.SlotCount ? bestSlot : -1;
         }
 
-        public Vector3 GetSlotPosition(int slotIndex)
+        private void ShiftSlinkiesRight(int startIndex)
         {
-            return lowerGridConfig.GetWorldPosition(slotIndex);
+            for (int i = lowerGridConfig.SlotCount - 1; i > startIndex; i--)
+            {
+                if (!lowerGridConfig.IsSlotEmpty(i - 1))
+                {
+                    SlinkyBehaviour slinkyToMove = lowerGridConfig.GetSlinkyAt(i - 1);
+                    lowerGridConfig.RemoveSlinky(i - 1);
+                    lowerGridConfig.PlaceSlinky(slinkyToMove, i);
+                    slinkyToMove.MoveToTarget(lowerGridConfig.GetWorldPosition(i));
+                    slinkyToMove.SlotIndex = i;
+                }
+            }
         }
-
-        public GridConfig GetUpperGridConfig()
+        public void ShiftRemainingSlinkies()
         {
-            return upperGridConfig;
-        }
+            List<SlinkyBehaviour> slinkies = LowerGridConfig.GetAllSlinkies();
+            Queue<SlinkyBehaviour> shiftQueue = new Queue<SlinkyBehaviour>();
 
-        public GridConfig GetLowerGridConfig()
-        {
-            return lowerGridConfig;
+            for (int i = 0; i < slinkies.Count; i++)
+            {
+                if (slinkies[i] != null)
+                {
+                    shiftQueue.Enqueue(slinkies[i]);
+                }
+            }
+
+            for (int i = 0; i < LowerGridConfig.SlotCount; i++)
+            {
+                if (shiftQueue.Count > 0)
+                {
+                    SlinkyBehaviour slinky = shiftQueue.Dequeue();
+                    int newSlot = lowerGridConfig.GetFirstEmptySlotIndex();
+                    lowerGridConfig.RemoveSlinky(slinky.SlotIndex);
+                    LowerGridConfig.PlaceSlinky(slinky, newSlot);
+                    slinky.SlotIndex = newSlot;
+                    slinky.MoveToTarget(LowerGridConfig.GetWorldPosition(newSlot));
+                }
+            }
         }
     }
-
     public class GridData
     {
         public SlinkyBehaviour slinky;
@@ -131,5 +145,4 @@ namespace HybridPuzzle.SlinkyJam.Grid
             this.pos = pos;
         }
     }
-
 }

@@ -77,19 +77,7 @@ namespace HybridPuzzle.SlinkyJam.Slinky
                 GridManager gridManager = FindObjectOfType<GridManager>();
                 if (gridManager != null)
                 {
-                    int emptySlotIndex = gridManager.FindEmptySlotInLowerGrid();
-                    if (emptySlotIndex != -1)
-                    {
-                        _targetPosition = gridManager.GetSlotPosition(emptySlotIndex);
-                        MoveSlinky();
-                        gridManager.RemoveSlinkyFromGrid(this, false, SlotIndex);
-                        SlotIndex = emptySlotIndex;
-                        gridManager.PlaceSlinkyInLowerGrid(this);
-                    }
-                    else
-                    {
-                        _isSelected = false;
-                    }
+                    gridManager.PlaceSlinkyInLowerGrid(this);
                 }
             }
         }

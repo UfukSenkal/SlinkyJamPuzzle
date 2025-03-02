@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using HybridPuzzle.SlinkyJam.Slinky;
 
-
 namespace HybridPuzzle.SlinkyJam.Grid
 {
     [System.Serializable]
@@ -14,6 +13,7 @@ namespace HybridPuzzle.SlinkyJam.Grid
         private Vector2Int size;
 
         public int SlotCount => size.x * size.y;
+
         public void InitializeGrid(Vector2Int size, Transform parent)
         {
             this.size = size;
@@ -35,24 +35,39 @@ namespace HybridPuzzle.SlinkyJam.Grid
                 }
             }
         }
+        public SlinkyBehaviour GetSlinkyAt(int slotIndex)
+        {
+            return _slots[slotIndex].slinky;
+        }
+
         public void PlaceSlinky(SlinkyBehaviour slinky, int slotIndex)
         {
-            _slots[slotIndex].slinky = slinky;
+            if (_slots.ContainsKey(slotIndex))
+                _slots[slotIndex].slinky = slinky;
         }
+
         public void RemoveSlinky(int slotIndex)
         {
-            _slots[slotIndex].slinky = null;
+            if (_slots.ContainsKey(slotIndex))
+                _slots[slotIndex].slinky = null;
+        }
+        public int GetFirstEmptySlotIndex()
+        {
+            foreach (var item in _slots)
+            {
+                if (item.Value.IsEmpty)
+                    return item.Key;
+            }
+            return -1;
+        }
+        public bool IsSlotEmpty(int slotIndex)
+        {
+            return _slots.ContainsKey(slotIndex) && _slots[slotIndex].IsEmpty;
         }
 
         public Vector3 GetWorldPosition(int slotIndex)
         {
-            if (_slots.ContainsKey(slotIndex))
-            {
-                return _slots[slotIndex].pos;
-            }
-
-            Debug.LogWarning($"Invalid slot index: {slotIndex}.");
-            return Vector3.zero;
+            return _slots.ContainsKey(slotIndex) ? _slots[slotIndex].pos : Vector3.zero;
         }
 
         public bool ContainsSlotIndex(int slotIndex)
@@ -65,7 +80,6 @@ namespace HybridPuzzle.SlinkyJam.Grid
             Vector3 localPos = worldPos - offset;
             int x = Mathf.FloorToInt(localPos.x);
             int y = Mathf.FloorToInt(-localPos.z);
-
             return x >= 0 && x < size.x && y >= 0 && y < size.y;
         }
 
@@ -75,29 +89,20 @@ namespace HybridPuzzle.SlinkyJam.Grid
             int x = Mathf.FloorToInt(localPos.x);
             int y = Mathf.FloorToInt(-localPos.z);
 
-            if (x >= 0 && x < size.x && y >= 0 && y < size.y)
-            {
-                return x + y * size.x;
-            }
-
-            Debug.LogWarning($"World position {worldPos} is outside the grid.");
-            return -1;
-        }
-        public bool IsSlotEmpty(int slotIndex)
-        {
-            return _slots.ContainsKey(slotIndex) && _slots[slotIndex].IsEmpty;
+            return (x >= 0 && x < size.x && y >= 0 && y < size.y) ? x + y * size.x : -1;
         }
 
-        public IEnumerator<SlinkyBehaviour> GetSlinkyEnumerator()
+        public List<SlinkyBehaviour> GetAllSlinkies()
         {
+            List<SlinkyBehaviour> slinkies = new List<SlinkyBehaviour>();
             foreach (var kvp in _slots)
             {
                 if (kvp.Value.slinky != null)
                 {
-                    yield return kvp.Value.slinky;
+                    slinkies.Add(kvp.Value.slinky);
                 }
             }
+            return slinkies;
         }
-
     }
 }
