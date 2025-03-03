@@ -14,6 +14,9 @@ namespace HybridPuzzle.SlinkyJam.Level
         public GameObject loadingScreen;
         [SerializeField,LevelInitializer] public Component[] initializers;
 
+        public int CurrentLevelIndex => progressData.currentLevelIndex;
+        public int CurrentLevelCount => progressData.currentLevelCount + 1;
+
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -36,6 +39,7 @@ namespace HybridPuzzle.SlinkyJam.Level
         {
             DestroyOldLevel();
             progressData.currentLevelIndex = (progressData.currentLevelIndex + 1) % progressData.levels.Count;
+            progressData.currentLevelCount++;
             StartCoroutine(LoadLevelRoutine());
         }
         public void RestartLevel()

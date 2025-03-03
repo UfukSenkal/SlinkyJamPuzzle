@@ -8,6 +8,7 @@ namespace HybridPuzzle.SlinkyJam.Level
     public class LevelProgressData_SO : ScriptableObject
     {
        [HideInInspector] public int currentLevelIndex = 0;
+       [HideInInspector] public int currentLevelCount = 0;
         public List<LevelData_SO> levels; 
     }
 }

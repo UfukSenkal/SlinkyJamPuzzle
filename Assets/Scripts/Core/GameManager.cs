@@ -9,8 +9,6 @@ namespace HybridPuzzle.SlinkyJam.Core
     {
         public static GameManager Instance { get; private set; }
 
-        private GridManager _gridManager;
-
         private LevelData_SO _levelData;
         private int remainingSlinkies;
 
@@ -18,7 +16,6 @@ namespace HybridPuzzle.SlinkyJam.Core
         {
             Instance = this;
             _levelData = currentLevel;
-            _gridManager = currentLevel.LevelInstance.Get<GridManager>();
             remainingSlinkies = _levelData.slinkies.Count;
         }
 
@@ -37,13 +34,15 @@ namespace HybridPuzzle.SlinkyJam.Core
         private void Win()
         {
             Debug.Log("You Win!");
-            LevelManager.Instance.LoadNextLevel();
+            var successMenu = _levelData.LevelInstance.Get<UI.GameSuccessMenu>();
+            successMenu.OpenMenu();
         }
 
         public void Fail()
         {
             Debug.Log("Game Over!");
-            LevelManager.Instance.RestartLevel();
+            var gameOverMenu = _levelData.LevelInstance.Get<UI.GameOverMenu>();
+            gameOverMenu.OpenMenu();
         }
 
 

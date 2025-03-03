@@ -55,7 +55,7 @@ namespace HybridPuzzle.SlinkyJam.Slinky
             Vector3 linearPosition = Vector3.Lerp(startPos, endPos, t); 
 
             float parabola = Mathf.Sin(t * Mathf.PI); 
-            Vector3 offset = new Vector3(0, parabola * 0.5f, 0);
+            Vector3 offset = new Vector3(0, parabola , 0);
 
             return linearPosition + offset;
         }
