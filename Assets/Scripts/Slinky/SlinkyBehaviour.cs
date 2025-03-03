@@ -75,11 +75,11 @@ namespace HybridPuzzle.SlinkyJam.Slinky
         {
             if (!_isSelected && !_isMoving)
             {
-                _isSelected = true;
                 GridManager gridManager = _levelPlayer.Get<GridManager>();
                 if (gridManager != null)
                 {
-                    gridManager.PlaceSlinkyInLowerGrid(this);
+
+                    _isSelected = gridManager.TryPlaceSlinkyInLowerGrid(this);
                 }
             }
         }

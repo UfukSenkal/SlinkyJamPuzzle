@@ -65,10 +65,10 @@ namespace HybridPuzzle.SlinkyJam.Grid
             }
         }
 
-        public void PlaceSlinkyInLowerGrid(SlinkyBehaviour slinky)
+        public bool TryPlaceSlinkyInLowerGrid(SlinkyBehaviour slinky)
         {
             int slotIndex = FindBestSlot(slinky);
-            if (slotIndex == -1) return;
+            if (slotIndex == -1) return false;
 
             ShiftSlinkiesRight(slotIndex);
 
@@ -82,7 +82,7 @@ namespace HybridPuzzle.SlinkyJam.Grid
                 if (! isMatched && lowerGridConfig.IsGridFull())
                     Core.GameManager.Instance.Fail();
             };
-
+            return true;
         }
 
         private int FindBestSlot(SlinkyBehaviour slinky)
