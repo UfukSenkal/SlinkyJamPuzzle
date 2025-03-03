@@ -11,16 +11,16 @@ namespace HybridPuzzle.SlinkyJam.Level
         public Vector2Int lowerGridSize = new Vector2Int(5, 1);
         public List<SlinkyData> slinkies;
 
-        public GameObject LevelInstance { get; private set; }
+        public LevelPlayer LevelInstance { get; private set; }
         public void InitiliazeLevel()
         {
             GameObject levelGO = new GameObject("Level - " + name);
-            LevelInstance = levelGO;
+            LevelInstance = levelGO.AddComponent<LevelPlayer>();
         }
         public void DestroyLevel()
         {
             if (LevelInstance != null)
-                Object.Destroy(LevelInstance);
+                Object.Destroy(LevelInstance.gameObject);
 
         }
 

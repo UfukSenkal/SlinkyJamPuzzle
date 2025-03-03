@@ -12,7 +12,7 @@ namespace HybridPuzzle.SlinkyJam.Level
 
         public LevelProgressData_SO progressData;
         public GameObject loadingScreen;
-        [SerializeReference] public Component[] initializers;
+        [SerializeField,LevelInitializer] public Component[] initializers;
 
         private void Awake()
         {
@@ -34,16 +34,17 @@ namespace HybridPuzzle.SlinkyJam.Level
 
         public void LoadNextLevel()
         {
+            DestroyOldLevel();
             progressData.currentLevelIndex = (progressData.currentLevelIndex + 1) % progressData.levels.Count;
             StartCoroutine(LoadLevelRoutine());
         }
         public void RestartLevel()
         {
+            DestroyOldLevel();
             StartCoroutine(LoadLevelRoutine());
         }
         private IEnumerator LoadLevelRoutine()
         {
-            DestroyOldLevel();
             ShowLoadingScreen(true);
             yield return new WaitForSeconds(1);
             LoadCurrentLevel();
@@ -66,7 +67,9 @@ namespace HybridPuzzle.SlinkyJam.Level
                 {
                     if (initializer is ILevelInitializer levelInitializer)
                     {
+
                         levelInitializer.InitiliazeWithLevel(currentLevel);
+                        currentLevel.LevelInstance.Register(initializer);
                     }
                 }
             }
@@ -96,7 +99,7 @@ namespace HybridPuzzle.SlinkyJam.Level
             LevelData_SO currentLevel = GetCurrentLevel();
             if (currentLevel != null)
             {
-                Destroy(currentLevel.LevelInstance);
+                currentLevel.DestroyLevel();
             }
         }
     }

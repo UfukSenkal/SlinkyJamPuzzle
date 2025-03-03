@@ -21,6 +21,7 @@ namespace HybridPuzzle.SlinkyJam.Slinky
         private Vector3 _targetPosition;
         private bool _isMoving = false;
         private bool _isSelected = false;
+        private Level.LevelPlayer _levelPlayer;
 
         public Action onMovementComplete;
 
@@ -28,11 +29,12 @@ namespace HybridPuzzle.SlinkyJam.Slinky
         public Color Color { get; private set; }
         public void Initialize(Vector3 startPos, Vector3 endPos, Color color)
         {
+            _levelPlayer = transform.root.GetComponent<Level.LevelPlayer>();
             Color = color;
             transform.position = startPos;
             _targetPosition = startPos;
             _segments = new List<Transform>();
-
+            _isSelected = false;
             float distance = Vector3.Distance(startPos, endPos);
             int segmentCount = Mathf.CeilToInt(distance / segmentSpacing);
 
@@ -74,7 +76,7 @@ namespace HybridPuzzle.SlinkyJam.Slinky
             if (!_isSelected && !_isMoving)
             {
                 _isSelected = true;
-                GridManager gridManager = FindObjectOfType<GridManager>();
+                GridManager gridManager = _levelPlayer.Get<GridManager>();
                 if (gridManager != null)
                 {
                     gridManager.PlaceSlinkyInLowerGrid(this);

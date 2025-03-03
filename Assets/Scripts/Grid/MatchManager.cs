@@ -22,9 +22,9 @@ namespace HybridPuzzle.SlinkyJam.Matching
             _gridManager = gridManager;
         }
 
-        public void CheckMatch()
+        public bool CheckMatch()
         {
-            if (_isMatching) return; 
+            if (_isMatching) return true; 
 
             List<SlinkyBehaviour> matchedSlinkies = FindMatch();
             if (matchedSlinkies.Count == 3)
@@ -39,7 +39,9 @@ namespace HybridPuzzle.SlinkyJam.Matching
                 }
 
                 AnimateMatch(matchedSlinkies);
+                return true;
             }
+            return false;
         }
 
         private List<SlinkyBehaviour> FindMatch()

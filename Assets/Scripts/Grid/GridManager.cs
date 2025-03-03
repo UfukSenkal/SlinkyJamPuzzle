@@ -10,26 +10,37 @@ namespace HybridPuzzle.SlinkyJam.Grid
 {
     public class GridManager : MonoBehaviour, ILevelInitializer
     {
+
         [SerializeField] private GridConfig upperGridConfig;
         [SerializeField] private GridConfig lowerGridConfig;
         [SerializeField] private SlinkyBehaviour slinkyPrefab;
 
         private MatchManager _matchManager;
         private LevelData_SO _levelData;
-
+        private Transform _gridParent;
+        private Transform _slinkyParent;
         public GridConfig LowerGridConfig => lowerGridConfig;
 
         public void InitiliazeWithLevel(LevelData_SO currentLevel)
         {
             _levelData = currentLevel;
+
+            var gridParent = new GameObject("Grid Parent");
+            gridParent.transform.SetParent(_levelData.LevelInstance.transform);
+            _gridParent = gridParent.transform;
+
+            var slinkyParent = new GameObject("Slinky Parent");
+            slinkyParent.transform.SetParent(_levelData.LevelInstance.transform);
+            _slinkyParent = slinkyParent.transform;
+
             InitializeGrids();
             SpawnSlinkies();
             _matchManager = new MatchManager(this);
         }
         private void InitializeGrids()
         {
-            upperGridConfig.InitializeGrid(_levelData.upperGridSize, transform);
-            lowerGridConfig.InitializeGrid(_levelData.lowerGridSize, transform);
+            upperGridConfig.InitializeGrid(_levelData.upperGridSize, _gridParent);
+            lowerGridConfig.InitializeGrid(_levelData.lowerGridSize, _gridParent);
         }
 
         private void SpawnSlinkies()
@@ -46,6 +57,7 @@ namespace HybridPuzzle.SlinkyJam.Grid
                 Vector3 endPos = upperGridConfig.GetWorldPosition(slinkyData.endSlot);
 
                 SlinkyBehaviour slinky = Instantiate(slinkyPrefab, startPos, Quaternion.identity);
+                slinky.transform.SetParent(_slinkyParent);
                 slinky.Initialize(startPos, endPos, slinkyData.color);
                 upperGridConfig.PlaceSlinky(slinky, slinkyData.startSlot);
                 upperGridConfig.PlaceSlinky(slinky, slinkyData.endSlot);
@@ -65,9 +77,9 @@ namespace HybridPuzzle.SlinkyJam.Grid
             slinky.MoveToTarget(lowerGridConfig.GetWorldPosition(slotIndex));
             slinky.onMovementComplete += () =>
             {
-                _matchManager.CheckMatch();
+               bool isMatched = _matchManager.CheckMatch();
                 slinky.onMovementComplete = null;
-                if (lowerGridConfig.IsGridFull())
+                if (! isMatched && lowerGridConfig.IsGridFull())
                     Core.GameManager.Instance.Fail();
             };
 

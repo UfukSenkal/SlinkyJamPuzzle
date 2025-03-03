@@ -1,28 +1,27 @@
 using UnityEngine;
 using HybridPuzzle.SlinkyJam.Grid;
 using HybridPuzzle.SlinkyJam.Level;
+using HybridPuzzle.SlinkyJam.Helper;
 
 namespace HybridPuzzle.SlinkyJam.Core
 {
-    public class GameManager : MonoBehaviour
+    public class GameManager : MonoBehaviour, ILevelInitializer
     {
         public static GameManager Instance { get; private set; }
 
-        [SerializeField] private GridManager gridManager;
-        [SerializeField] private LevelData_SO levelData;
+        private GridManager _gridManager;
 
+        private LevelData_SO _levelData;
         private int remainingSlinkies;
 
-        private void Awake()
+        public void InitiliazeWithLevel(LevelData_SO currentLevel)
         {
-            if (Instance == null) Instance = this;
-            else Destroy(gameObject);
+            Instance = this;
+            _levelData = currentLevel;
+            _gridManager = currentLevel.LevelInstance.Get<GridManager>();
+            remainingSlinkies = _levelData.slinkies.Count;
         }
 
-        private void Start()
-        {
-            remainingSlinkies = levelData.slinkies.Count;
-        }
 
         public void OnMatchCompleted()
         {
@@ -38,13 +37,15 @@ namespace HybridPuzzle.SlinkyJam.Core
         private void Win()
         {
             Debug.Log("You Win!");
-            // TODO: Buraya kazanma ekraný ekleyebilirsin
+            LevelManager.Instance.LoadNextLevel();
         }
 
         public void Fail()
         {
             Debug.Log("Game Over!");
-            // TODO: Buraya kaybetme ekraný ekleyebilirsin
+            LevelManager.Instance.RestartLevel();
         }
+
+
     }
 }
