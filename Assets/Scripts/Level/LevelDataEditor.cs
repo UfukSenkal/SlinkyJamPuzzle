@@ -1,16 +1,17 @@
-#if UNITY_EDITOR
 using HybridPuzzle.SlinkyJam.Helper;
 using UnityEditor;
 using UnityEngine;
+
 namespace HybridPuzzle.SlinkyJam.Level
 {
-
     [CustomEditor(typeof(LevelData_SO))]
     public class LevelDataEditor : Editor
     {
         private LevelData_SO _levelData;
-        private const float CellSize = 20f; 
-        private const float Padding = 5f; 
+        private int _selectedStartSlot = -1;
+        private int _selectedEndSlot = -1;
+        private float cellSize = 40.0f;
+        private float buttonWidth = 40.0f;
 
         private void OnEnable()
         {
@@ -19,81 +20,106 @@ namespace HybridPuzzle.SlinkyJam.Level
 
         public override void OnInspectorGUI()
         {
-            EditorGUILayout.LabelField("Grid Settings", EditorStyles.boldLabel);
-            _levelData.upperGridSize = EditorGUILayout.Vector2IntField("Upper Grid Size", _levelData.upperGridSize);
-
             DrawGrid();
+            GUILayout.Space(10);
 
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Slinkies", EditorStyles.boldLabel);
-            for (int i = 0; i < _levelData.slinkies.Count; i++)
+            GUILayout.Label("Select Grid Slot", EditorStyles.boldLabel);
+            GUILayout.Space(10);
+            DrawDefaultInspector();
+
+            if (_selectedStartSlot != -1)
             {
-                EditorGUILayout.BeginVertical("box");
-
-                EditorGUILayout.LabelField($"Slinky {i + 1}");
-                _levelData.slinkies[i].startSlot = EditorGUILayout.IntField("Start Slot", _levelData.slinkies[i].startSlot);
-                _levelData.slinkies[i].endSlot = EditorGUILayout.IntField("End Slot", _levelData.slinkies[i].endSlot);
-                _levelData.slinkies[i].color = EditorGUILayout.ColorField("Color", _levelData.slinkies[i].color);
-
-                if (GUILayout.Button("Remove Slinky"))
-                {
-                    _levelData.slinkies.RemoveAt(i);
-                    break;
-                }
-
-                EditorGUILayout.EndVertical();
+                GUILayout.Label($"Start Slot: {_selectedStartSlot}");
             }
-
-            if (GUILayout.Button("Add Slinky"))
+            if (_selectedEndSlot != -1)
             {
-                _levelData.slinkies.Add(new SlinkyData());
-            }
-
-            if (GUI.changed)
-            {
-                EditorUtility.SetDirty(_levelData);
+                GUILayout.Label($"End Slot: {_selectedEndSlot}");
             }
         }
 
         private void DrawGrid()
         {
-            EditorGUILayout.LabelField("Grid Preview");
-            Rect gridRect = GUILayoutUtility.GetRect(
-                CellSize * _levelData.upperGridSize.x + Padding * (_levelData.upperGridSize.x - 1),
-                CellSize * _levelData.upperGridSize.y + Padding * (_levelData.upperGridSize.y - 1)
-            );
+            if (_levelData == null) return;
 
-            Handles.color = Color.gray;
-            for (int x = 0; x <= _levelData.upperGridSize.x; x++)
+            Vector2Int gridSize = _levelData.upperGridSize;
+
+            GUILayout.BeginVertical();
+            for (int y = 0; y < gridSize.y; y++)
             {
-                float xPos = gridRect.x + x * (CellSize + Padding);
-                Handles.DrawLine(new Vector3(xPos, gridRect.y, 0), new Vector3(xPos, gridRect.y + gridRect.height, 0));
+                GUILayout.BeginHorizontal();
+                for (int x = 0; x < gridSize.x; x++)
+                {
+                    int slotIndex = GetSlotIndex(x, y);
+                    string slotLabel = $"{slotIndex}";
+
+                    SlinkyData slinky = _levelData.slinkies.Find(s => s.startSlot == slotIndex || s.endSlot == slotIndex);
+                    Color buttonColor = slinky != null ? GetColor(slinky.color) : Color.white;
+
+                    GUI.backgroundColor = buttonColor;
+                    if (GUILayout.Button(slotLabel, GUILayout.Width(buttonWidth), GUILayout.Height(cellSize)))
+                    {
+                        HandleSlotClick(slotIndex);
+                    }
+                    GUI.backgroundColor = Color.white;
+
+                    if (slinky != null)
+                    {
+                        Rect buttonRect = GUILayoutUtility.GetLastRect();
+                        Rect labelRect = new Rect(buttonRect.xMax - 40, buttonRect.yMax - 40, 20, 20);
+
+                        GUI.Label(labelRect, _levelData.slinkies.IndexOf(slinky).ToString(), EditorStyles.boldLabel);
+                    }
+                }
+                GUILayout.EndHorizontal();
             }
-            for (int y = 0; y <= _levelData.upperGridSize.y; y++)
+            GUILayout.EndVertical();
+        }
+
+        private void HandleSlotClick(int slotIndex)
+        {
+            if (_selectedStartSlot == -1)
             {
-                float yPos = gridRect.y + y * (CellSize + Padding);
-                Handles.DrawLine(new Vector3(gridRect.x, yPos, 0), new Vector3(gridRect.x + gridRect.width, yPos, 0));
+                _selectedStartSlot = slotIndex;
             }
-
-            Handles.color = Color.red;
-            foreach (var slinky in _levelData.slinkies)
+            else if (_selectedEndSlot == -1)
             {
-                Vector2 startPos = GetGridPosition(slinky.startSlot);
-                Vector2 endPos = GetGridPosition(slinky.endSlot);
+                _selectedEndSlot = slotIndex;
+                AddSlinkyToLevel(_selectedStartSlot, _selectedEndSlot);
 
-                Handles.DrawLine(
-                    new Vector3(gridRect.x + startPos.x * (CellSize + Padding), gridRect.y + startPos.y * (CellSize + Padding), 0),
-                    new Vector3(gridRect.x + endPos.x * (CellSize + Padding), gridRect.y + endPos.y * (CellSize + Padding), 0)
-                );
+                _selectedStartSlot = -1;
+                _selectedEndSlot = -1;
             }
         }
 
-        private Vector2 GetGridPosition(int slotIndex)
+        private void AddSlinkyToLevel(int startSlot, int endSlot)
         {
-            int x = slotIndex % _levelData.upperGridSize.x;
-            int y = slotIndex / _levelData.upperGridSize.x;
-            return new Vector2(x, y);
+            Undo.RegisterCompleteObjectUndo(_levelData, "Add Slinky");
+
+            _levelData.slinkies.Add(new SlinkyData
+            {
+                startSlot = startSlot,
+                endSlot = endSlot,
+                color = SlinkyColor.Red,
+            });
+
+            EditorUtility.SetDirty(_levelData);
+        }
+
+        private int GetSlotIndex(int x, int y)
+        {
+            return x + y * _levelData.upperGridSize.x;
+        }
+
+        private Color GetColor(SlinkyColor color)
+        {
+            return color switch
+            {
+                SlinkyColor.Red => Color.red,
+                SlinkyColor.Blue => Color.blue,
+                SlinkyColor.Green => Color.green,
+                SlinkyColor.Yellow => Color.yellow,
+                _ => Color.white,
+            };
         }
     }
 }
-#endif

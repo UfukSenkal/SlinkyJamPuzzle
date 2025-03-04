@@ -28,6 +28,6 @@ namespace HybridPuzzle.SlinkyJam.Helper
     {
         public int startSlot;
         public int endSlot;
-        public Color color;
+        public SlinkyColor color;
     }
 }

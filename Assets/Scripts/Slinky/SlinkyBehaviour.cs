@@ -4,6 +4,7 @@ using UnityEngine;
 using DG.Tweening;
 using System;
 using HybridPuzzle.SlinkyJam.Grid;
+using HybridPuzzle.SlinkyJam.Helper;
 
 namespace HybridPuzzle.SlinkyJam.Slinky
 {
@@ -26,10 +27,10 @@ namespace HybridPuzzle.SlinkyJam.Slinky
 
         public int SlotIndex { get; set; }
         public Color Color { get; private set; }
-        public void Initialize(Vector3 startPos, Vector3 endPos, Color color)
+        public void Initialize(Vector3 startPos, Vector3 endPos, SlinkyColor color)
         {
             _levelPlayer = transform.root.GetComponent<Level.LevelPlayer>();
-            Color = color;
+            Color = SlinkyColorHelper.GetColor(color);
             transform.position = startPos;
             _segments = new List<Transform>();
             _isSelected = false;
@@ -43,7 +44,7 @@ namespace HybridPuzzle.SlinkyJam.Slinky
                 Quaternion segmentRotation = CalculateSegmentRotation(startPos, endPos, i, segmentCount);
 
                 GameObject segment = Instantiate(segmentPrefab, segmentPosition, segmentRotation, transform);
-                segment.GetComponent<Renderer>().material.color = color; 
+                segment.GetComponent<Renderer>().material.color = Color; 
                 _segments.Add(segment.transform);
             }
         }
