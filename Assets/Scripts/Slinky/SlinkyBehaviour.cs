@@ -11,14 +11,13 @@ namespace HybridPuzzle.SlinkyJam.Slinky
     {
         public GameObject segmentPrefab;
         public float segmentSpacing = 0.5f;
-        public AnimationCurve movementCurve;
-        public float wobbleAmount = 0.2f;
-        public float wobbleSpeed = 5f;
         public float segmentFollowSpeed = 5f;
-        public float scaleEffectDuration = 0.2f;
+        [SerializeField] private float _travelTime = 0.5f; // Hareket süresi
+        [SerializeField] private float _delayBetweenSegments = 0.05f; // Segmentler arasý gecikme
+        [SerializeField] private float _springFactor = 0.15f; // Yay esnekliði
+        [SerializeField] private Ease _movementEase = Ease.InOutSine;
 
         private List<Transform> _segments;
-        private Vector3 _targetPosition;
         private bool _isMoving = false;
         private bool _isSelected = false;
         private Level.LevelPlayer _levelPlayer;
@@ -32,7 +31,6 @@ namespace HybridPuzzle.SlinkyJam.Slinky
             _levelPlayer = transform.root.GetComponent<Level.LevelPlayer>();
             Color = color;
             transform.position = startPos;
-            _targetPosition = startPos;
             _segments = new List<Transform>();
             _isSelected = false;
             float distance = Vector3.Distance(startPos, endPos);
@@ -84,49 +82,31 @@ namespace HybridPuzzle.SlinkyJam.Slinky
             }
         }
 
-        public void MoveToTarget(Vector3 targetPos)
+        public void MoveToTarget(Vector3 targetPosition)
         {
-            _targetPosition = targetPos;
-            MoveSlinky();
-        }
-        private void MoveSlinky()
-        {
+            if (_isMoving) return;
             _isMoving = true;
-            Transform firstSegment = _segments[0];
-            Transform lastSegment = _segments[_segments.Count - 1];
 
-            firstSegment.DOMoveY(firstSegment.position.y + 1f, 0.3f).OnComplete(() =>
+            Vector3 startPos = _segments[0].position;
+            Vector3 midPoint = (startPos + targetPosition) / 2 + Vector3.up * (_springFactor * Vector3.Distance(startPos, targetPosition));
+
+
+            for (int i = 0; i < _segments.Count; i++)
             {
-                firstSegment.DOMove(_targetPosition, 0.5f).OnUpdate(UpdateBridgeShape).OnComplete(() =>
-                {
-                    AlignSegments();
-                    _isMoving = false;
-                    _isSelected = false;
-                });
+                int index = i;
+                float delay = i * _delayBetweenSegments;
+
+                _segments[index].DOPath(new Vector3[] { midPoint, targetPosition }, _travelTime, PathType.CatmullRom)
+                    .SetDelay(delay)
+                    .SetEase(_movementEase);
+            }
+
+            DOVirtual.DelayedCall(_travelTime + _delayBetweenSegments * _segments.Count, () =>
+            {
+                _isMoving = false;
+                onMovementComplete?.Invoke();
             });
         }
 
-        private void UpdateBridgeShape()
-        {
-            for (int i = 1; i < _segments.Count - 1; i++)
-            {
-                float t = (float)i / (_segments.Count - 1);
-                Vector3 bridgePos = Vector3.Lerp(_segments[0].position, _segments[_segments.Count - 1].position, t);
-                float arcHeight = Mathf.Sin(t * Mathf.PI) * 0.5f;
-                _segments[i].position = bridgePos + new Vector3(0, arcHeight, 0);
-            }
-        }
-
-        private void AlignSegments()
-        {
-            for (int i = 0; i < _segments.Count; i++)
-            {
-                var segment = _segments[i];
-                if (i >= _segments.Count - 1)
-                    segment.DOMove(_targetPosition, 0.2f).OnComplete(() => onMovementComplete?.Invoke());
-                else
-                    segment.DOMove(_targetPosition, 0.2f);
-            }
-        }
     }
 }
