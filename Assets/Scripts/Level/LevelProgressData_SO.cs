@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace HybridPuzzle.SlinkyJam.Level
 {
-    [CreateAssetMenu(fileName = "LevelProgressData", menuName = "StickBlast/Level Progress Data", order = 1)]
+    [CreateAssetMenu(fileName = "LevelProgressData", menuName = "SlinkyJam/Level Progress Data", order = 1)]
     public class LevelProgressData_SO : ScriptableObject
     {
        [HideInInspector] public int currentLevelIndex = 0;

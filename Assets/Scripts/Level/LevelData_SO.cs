@@ -4,7 +4,7 @@ using HybridPuzzle.SlinkyJam.Helper;
 
 namespace HybridPuzzle.SlinkyJam.Level
 {
-    [CreateAssetMenu(fileName = "LevelData", menuName = "Game/LevelData")]
+    [CreateAssetMenu(fileName = "LevelData", menuName = "SlinkyJam/LevelData")]
     public class LevelData_SO : ScriptableObject
     {
         public Vector2Int upperGridSize;
